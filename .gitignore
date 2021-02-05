@@ -1,2 +1,4 @@
 /data/sc_global_japan_rik_Huang_Yoshikawa_schizophrenia_exome-RP-1855-Exome-JP-RIK-C-0007*
 /output/local_output 
+/data/coverage_region.bed
+/src/trial_depth.py

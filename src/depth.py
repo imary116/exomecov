@@ -10,8 +10,3 @@ j = b.new_job(name='j1')
 j.command('samtools depth -H -b ~/Desktop/Broad/tj/exomecov/data/coverage_region.bed -f ~/Desktop/Broad/tj/exomecov/data/cram_file_paths -o ~/Desktop/Broad/tj/exomecov/output/local_output')
 
 b.run()
-
-
-
-
-
