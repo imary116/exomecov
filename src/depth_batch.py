@@ -13,15 +13,17 @@ def depth(b, cram, bed, label):
 
 #function to merge the results together 
 def merge(b, results):
-	k = b.new_job(name='merge_results')
+	j = b.new_job(name='merge_results')
+	j.image('hailgenetics/hail:0.2.37')
+	j.cpu(4)
 	if results:
-		k.command(f'''
+		j.command(f'''
 python3 -c "
 import hail as hl
 ht = hl.import_table({results}, impute=True)
-ht.export('{k.ofile}')"
+ht.export('{j.ofile}')"
 ''')
-		return k
+		return j
 
 if __name__ == '__main__':
 	backend = hb.ServiceBackend(billing_project='daly-neale-sczmeta', bucket='imary116') #set up backend 
