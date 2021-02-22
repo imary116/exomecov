@@ -5,7 +5,7 @@ import os
 def depth(b, cram, bed, label):
 	j = b.new_job(name=f'depth-{label}') #define job and label it as "depth-<file_name>"
 	#use publically available Docker image that contains samtools  
-	j.image('hailgenetics/genetics:0.2.37')
+	j.image('gcr.io/daly-neale-sczmeta/genetics-cram')
 	j.cpu(4)
 	#run samtools depth on the .cram file and save it to a tmp file
 	j.command(f'''samtools depth -b {bed} {cram.cram} > {j.ofile}''')

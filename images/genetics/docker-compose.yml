@@ -1,0 +1,8 @@
+version: "3"
+
+services:
+  genetics:
+    image: genetics-cram:latest
+    tty: true
+    volumes:
+      - ../../:/home
