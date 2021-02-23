@@ -20,7 +20,7 @@ def merge(b, results):
 		j.command(f'''
 python3 -c "
 import hail as hl
-ht = hl.import_table({results}, impute=True)
+ht = hl.import_table(["{"\", \"".join(results)}"], impute=True)
 ht.export('{j.ofile}')"
 ''')
 		return j
