@@ -17,11 +17,11 @@ def merge(b, results):
 	j.image('hailgenetics/hail:0.2.37')
 	j.cpu(4)
 	if results:
-		delimiter = '", "'
+		delimiter = "', '"
 		j.command(f'''
 python3 -c "
 import hail as hl
-ht = hl.import_table(["{delimiter.join(results)}"], impute=True)
+ht = hl.import_table(['{delimiter.join(results)}'], impute=True, no_header=True)
 ht.export('{j.ofile}')"
 ''')
 		return j
