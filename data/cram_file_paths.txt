@@ -1,0 +1,2 @@
+'gs://imary116/JP-RIK-C-00070.cram'
+'gs://imary116/JP-RIK-C-00071.cram'

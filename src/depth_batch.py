@@ -42,13 +42,16 @@ if __name__ == '__main__':
 	# returns a list of file paths: ex. ['gs://.../JP-RIK-C-00070.cram', 'gs://.../JP-RIK-C-00071.cram', ... ]
 	###cram_file_paths = subprocess.check_output(['gsutil', 'ls', f'{root}/{subpath}']).decode().split('\n')
 
-
 	###cram_file_paths = cram_file_paths[0:3] # the first three file paths in the list
 
 	cram_file_paths = [
 		'gs://imary116/JP-RIK-C-00070.cram',
 		'gs://imary116/JP-RIK-C-00071.cram']
-	
+
+	# cram_file_paths = [
+	# 	'gs://fc-7a86ab95-f5c5-4ac1-976b-e57dbc601eb1/sc_global_japan_rik_Huang_Yoshikawa_schizophrenia_exome/RP-1855/Exome/JP-RIK-C-00070/v1/JP-RIK-C-00070.cram',
+	# 	'gs://fc-7a86ab95-f5c5-4ac1-976b-e57dbc601eb1/sc_global_japan_rik_Huang_Yoshikawa_schizophrenia_exome/RP-1855/Exome/JP-RIK-C-00071/v1/JP-RIK-C-00071.cram']
+
 	#run depth function on each cram file
 	results = [] #empty lists for the depth function outputs
 	for path in cram_file_paths:
