@@ -3,6 +3,7 @@
 /output/local_output 
 /data/coverage_region.bed
 /src/trial_depth.py
+/src/.idea
 
 ####
 *fasta*
