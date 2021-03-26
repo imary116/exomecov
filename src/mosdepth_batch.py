@@ -18,19 +18,31 @@ def depth(b: hb.batch.Batch, cram: hb.resource.ResourceGroup, bed: hb.resource.R
     return j
 
 # function to merge the results together
-# def merge(b, results):
-#     j = b.new_job(name='merge_results')
-#     j.image('hailgenetics/hail:0.2.37')
-#     j.cpu(4)
-#     if results:
-#         delimiter = "', '"
-#         j.command(f'''
-# python3 -c "
-# import hail as hl
-# ht = hl.import_table(['{delimiter.join(results)}'], impute=True, no_header=True)
-# ht.export('{j.ofile}')"
-# ''')
-#         return j
+def merge(b, results, labels):
+    j = b.new_job(name='merge_results')
+    j.image('hailgenetics/hail:0.2.37')
+    j.cpu(4)
+    if results:
+        delimiter = "', '"
+        j.command(f'''
+python3 -c "
+import hail as hl
+from functools import reduce
+
+ht_list = []
+paths = ['{delimiter.join(results)}']
+labels = ['{delimiter.join(labels)}']
+
+for p, l in zip(paths, labels):
+    ht = hl.import_table(p, impute=True, no_header=True)
+    ht = ht.annotate(label = l)
+    ht_list.append(ht)
+
+ht = reduce(lambda x, y: x.union(y), ht_list)
+
+ht.export('{j.ofile}')"
+''')
+        return j
 
 if __name__ == '__main__':
     backend = hb.ServiceBackend(billing_project='daly-neale-sczmeta', bucket='imary116')  # set up backend
@@ -46,12 +58,15 @@ if __name__ == '__main__':
         'gs://imary116/JP-RIK-C-00071.cram']
 
     # run depth function on each cram file
-    #results = []  # empty lists for the depth function outputs
+    results_region = []  # empty lists for the depth function outputs
+    results_threshold = []
+    labels = []
 
     for path in cram_file_paths:
 
         # only get the file name - without path (removed by os.path.basename) and '.cram' ext (removed by os.path.splitext)
         label = os.path.splitext(os.path.basename(path))[0]  # ex output: JP-RIK-C-00070
+        labels.append(label)
 
         # read in cram and corresponding crai files
         cram = b.read_input_group(
@@ -60,14 +75,15 @@ if __name__ == '__main__':
 
         # run depth function
         j = depth(b, cram, bed, label)
-        #results.append(j.ofile)  # append outputs to the list 'results'
+        results_region.append(j.ofile.region.bed.gz)  # append outputs to the list 'results'
+        results_threshold.append(j.ofile['threshold.bed.gz'])  # append outputs to the list 'results'
 
         # see what happens, but comment out after when you work on the merge command - took 2 min to run on the two cram files
         b.write_output(j.ofile, f'gs://imary116/data/mosdepth-coverage/{label}') #write the output files for each sample in a google cloud bucket (without merging the outputs)
 
     # merge command
-    # m = merge(b, results)
-    # b.write_output(m.ofile, 'gs://imary116/data/test-coverage/total_output.tsv')
+    m = merge(b, results_region, labels)
+    # b.write_output(m.ofile, 'gs://imary116/data/test-coverage/allsamples.region.tsv')
 
     b.run(open=True, wait=False)  # run batch
 
