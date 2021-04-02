@@ -44,13 +44,13 @@ if __name__ == '__main__':
 
 	###cram_file_paths = cram_file_paths[0:3] # the first three file paths in the list
 
-	cram_file_paths = [
-		'gs://imary116/JP-RIK-C-00070.cram',
-		'gs://imary116/JP-RIK-C-00071.cram']
-
 	# cram_file_paths = [
-	# 	'gs://fc-7a86ab95-f5c5-4ac1-976b-e57dbc601eb1/sc_global_japan_rik_Huang_Yoshikawa_schizophrenia_exome/RP-1855/Exome/JP-RIK-C-00070/v1/JP-RIK-C-00070.cram',
-	# 	'gs://fc-7a86ab95-f5c5-4ac1-976b-e57dbc601eb1/sc_global_japan_rik_Huang_Yoshikawa_schizophrenia_exome/RP-1855/Exome/JP-RIK-C-00071/v1/JP-RIK-C-00071.cram']
+	# 	'gs://imary116/JP-RIK-C-00070.cram',
+	# 	'gs://imary116/JP-RIK-C-00071.cram']
+
+	cram_file_paths = [
+		'gs://fc-7a86ab95-f5c5-4ac1-976b-e57dbc601eb1/sc_global_japan_rik_Huang_Yoshikawa_schizophrenia_exome/RP-1855/Exome/JP-RIK-C-00070/v1/JP-RIK-C-00070.cram',
+		'gs://fc-7a86ab95-f5c5-4ac1-976b-e57dbc601eb1/sc_global_japan_rik_Huang_Yoshikawa_schizophrenia_exome/RP-1855/Exome/JP-RIK-C-00071/v1/JP-RIK-C-00071.cram']
 
 	#run depth function on each cram file
 	results = [] #empty lists for the depth function outputs
@@ -78,7 +78,7 @@ if __name__ == '__main__':
 
 	# merge command
 	m = merge(b, results)
-	b.write_output(m.ofile, 'gs://imary116/data/test-coverage/total_output.tsv')
+	b.write_output(m.ofile, 'gs://imary116/data/test-coverage/actual_path_total_output.tsv')
 
 	b.run(open=True, wait=False) #run batch 
 
