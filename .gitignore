@@ -4,6 +4,7 @@
 /data/coverage_region.bed
 /src/trial_depth.py
 /src/.idea
+/src/hail-*
 
 ####
 *fasta*

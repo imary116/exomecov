@@ -1,0 +1,3 @@
+"gs://fc-1b3c48d4-1260-4477-ab89-9944a365a545/SCZ_Pulver_JHU_WES/C1622/Exome/P887751002D/v1/P887751002D.cram"
+"gs://fc-fe81fff6-ff0a-406d-858b-3a3d8bf779d3/SCHEMA_Robinson_Bristolcontrols_WES/RP-1841/Exome/Z10021/v1/Z10021.cram"
+"gs://fc-fe81fff6-ff0a-406d-858b-3a3d8bf779d3/SCHEMA_Robinson_Bristolcontrols_WES/RP-1841/Exome/Z08579_2/v1/Z08579_2.cram"

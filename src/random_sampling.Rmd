@@ -1,0 +1,32 @@
+---
+title: "Random sampling of cram files"
+author: "Mary T. Yohannes"
+date: "4/8/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+```
+
+# set working directory and read in table with SCHEMA CRAM paths, sample IDs, and capture (SCZ manifest)
+```{r}
+setwd("~/Desktop/Broad/tj/exomecov/data")
+ds <- read.csv('~/Desktop/Broad/tj/exomecov/data/2021-03-31_gnomad_scz-exome-manifest.txt', sep = "\t", header=T)
+```
+
+# pick out 100 samples at random 
+```{r}
+ds_just_cram <- subset(ds,grepl("^.+(.cram)$",cram)) # only selecting paths that end with .cram 
+set.seed(123) # for reproducibility
+ds_100 <- sample_n(ds_just_cram, 100) %>% select(cram) # pick 100 samples at random 
+colnames(ds_100) <- NULL # formatting 
+```
+
+# save cram file paths into a txt file 
+```{r}
+write.table(ds_100,"sampled_100.txt",row.names=FALSE)
+```
+
+
