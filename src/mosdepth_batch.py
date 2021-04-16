@@ -46,7 +46,7 @@ for p, n in zip(paths, names):
     ht_list.append(ht) # add hail table to the list 
 
 ht = reduce(lambda x, y: x.union(y), ht_list) # combine the hail tables into one big one 
-ht.export('{j.ofile}')"
+ht.write('{j.ofile}')"  
 ''')
         return j
 
@@ -87,10 +87,10 @@ if __name__ == '__main__':
 
     # merging
     mr = merge(b, results_region, labels, 'region')
-    b.write_output(mr.ofile, 'gs://imary116/data/coverage/78_random_samples_region.tsv')
+    b.write_output(mr.ofile, 'gs://imary116/data/coverage/78_random_samples_region.ht') #change to ht
 
     mt = merge(b, results_threshold, labels, 'threshold')
-    b.write_output(mt.ofile, 'gs://imary116/data/coverage/78_random_samples_threshold.tsv')
+    b.write_output(mt.ofile, 'gs://imary116/data/coverage/78_random_samples_threshold.ht')
 
     b.run(open=True, wait=False)  # run batch
 

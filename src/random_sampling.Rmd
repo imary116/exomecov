@@ -10,11 +10,28 @@ knitr::opts_chunk$set(echo = TRUE)
 library(dplyr)
 ```
 
-# set working directory and read in table with SCHEMA CRAM paths, sample IDs, and capture (SCZ manifest)
+# set working directory for code chunk and read in table with SCHEMA CRAM paths, sample IDs, and capture (SCZ manifest)
 ```{r}
-setwd("~/Desktop/Broad/tj/exomecov/data")
+#knitr::opts_chunk$set(root.dir = '~/Desktop/Broad/tj/exomecov/data') # set directory for code chunck 
+#setwd("~/Desktop/Broad/tj/exomecov/data")
 ds <- read.csv('~/Desktop/Broad/tj/exomecov/data/2021-03-31_gnomad_scz-exome-manifest.txt', sep = "\t", header=T)
 ```
+
+
+# extract the file paths from the table and save them to a txt file 
+```{r}
+cram_paths <- subset(ds,grepl("^.+(.cram)$",cram)) %>% select(cram)# only select paths that end with .cram 
+colnames(cram_paths) <- NULL # formatting
+
+# number of files paths with certain extensions
+# dim(subset(ds,grepl("^.+(.cram)$",cram)))[1] 
+# dim(subset(ds,grepl("^.+(.crai)$",cram)))[1] 
+# dim(subset(ds,grepl("^.+(.c)$",cram)))[1] 
+
+# save as txt file 
+write.table(cram_paths,"~/Desktop/Broad/tj/exomecov/data/cram_paths.txt",row.names=FALSE)
+```
+
 
 # pick out 100 samples at random 
 ```{r}
@@ -26,7 +43,7 @@ colnames(ds_100) <- NULL # formatting
 
 # save cram file paths into a txt file 
 ```{r}
-write.table(ds_100,"sampled_100.txt",row.names=FALSE)
+write.table(ds_100,"~/Desktop/Broad/tj/exomecov/data/sampled_100.txt",row.names=FALSE)
 ```
 
 
