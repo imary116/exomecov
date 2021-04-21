@@ -7,22 +7,23 @@ import hail as hl
 def depth(b: hb.batch.Batch, cram: hb.resource.ResourceGroup, bed: hb.resource.ResourceFile, label: str = None):
     j = b.new_job(name=f'depth-{label}')  # define job and label it as "depth-<file_name>"
     j.image('gcr.io/daly-neale-sczmeta/mosdepth') # use publicly available Docker image that contains mosdepth
-    j.cpu(4)
+    j.cpu(4) # update CPU size
     # the command written below produces 7 outputs and since we don't want all of them, we specify which outputs here - 'regions' and 'thresholds' bed files
     j.declare_resource_group(ofile={
         'regions.bed.gz': '{root}.regions.bed.gz',
         'thresholds.bed.gz': '{root}.thresholds.bed.gz'
     })
-    j.command(f'''mosdepth -n -b {bed} -T 1,10,20 {j.ofile} {cram.cram}''') # run mosdepth on the .cram file and save it to a tmp file
+    j.command(f'''mosdepth -n -b {bed} -T 1,10,20 {j.ofile} {cram.cram}''') # run mosdepth on the .cram file and save it to a tmp file j.ofile
     return j
 
-# function to merge results and annotate with sample names
+
+# function to merge the results produced from the depth function and annotate them with sample names (makes use of hail query)
 def merge(b, results, labels, job_label: str):
     j = b.new_job(name=f'merge-{job_label}')
     j.image('hailgenetics/hail:0.2.37')
     j.cpu(4)
     if results:
-        delimiter = "', '"
+        delimiter = "', '" # for formatting purposes
         j.command(f'''
 python3 -c "
 import hail as hl
@@ -34,21 +35,22 @@ ht_list = [] # to hold a list of hail tables after label annotation
 paths = ['{delimiter.join(results)}']
 names = ['{delimiter.join(labels)}']
 
-# for each hail table and corresponding label 
+# for each output of the depth function (in our case region.bed.gz and thresholds.bed.gz of each sample) and their corresponding sample labels 
 for p, n in zip(paths, names):
-    # the regions bed file has no header while the threshold bed file has one so for import, the options are slightly different 
+    # the regions bed file has no header while the threshold bed file has one so for import_table, the options are slightly different 
     if '{job_label}' == 'region': 
-        ht = hl.import_table(p, impute=True, no_header=True, force_bgz = True) # import in and unzip - no header  
+        ht = hl.import_table(p, impute=True, no_header=True, force_bgz = True) # import in as hail table and unzip - no header  
     else:
-        ht = hl.import_table(p, impute=True, force_bgz = True) # import in and unzip - with a header 
+        ht = hl.import_table(p, impute=True, force_bgz = True) # import in as a hail table and unzip - with a header 
     
-    ht = ht.annotate(sample = n) # add a sample column field so that later on when the tables are merged, we can keep track of which sample a table came from
+    ht = ht.annotate(sample = n) # add a sample column field using the sample lables so that later on when the tables are merged, we can keep track of which sample a table came from
     ht_list.append(ht) # add hail table to the list 
 
-ht = reduce(lambda x, y: x.union(y), ht_list) # combine the hail tables into one big one 
-ht.write('{j.ofile}')"  
+ht = reduce(lambda x, y: x.union(y), ht_list) # combine the hail tables in the list into one big one 
+ht.write('{j.ofile}')"  # write it out 
 ''')
         return j
+
 
 if __name__ == '__main__':
     backend = hb.ServiceBackend(billing_project='daly-neale-sczmeta', bucket='imary116')  # set up backend
@@ -77,7 +79,7 @@ if __name__ == '__main__':
             # run depth function
             j = depth(b, cram, bed, label)
 
-            # append depth function output to lists
+            # append depth function outputs to their corresponding lists
             results_region.append(j.ofile['regions.bed.gz'])
             results_threshold.append(j.ofile['thresholds.bed.gz'])
 
@@ -85,9 +87,9 @@ if __name__ == '__main__':
             #b.write_output(j.ofile, f'gs://imary116/data/mosdepth-coverage/{label}')
 
 
-    # merging
+    # merging and saving the outputs as hail tables
     mr = merge(b, results_region, labels, 'region')
-    b.write_output(mr.ofile, 'gs://imary116/data/coverage/78_random_samples_region.ht') #change to ht
+    b.write_output(mr.ofile, 'gs://imary116/data/coverage/78_random_samples_region.ht')
 
     mt = merge(b, results_threshold, labels, 'threshold')
     b.write_output(mt.ofile, 'gs://imary116/data/coverage/78_random_samples_threshold.ht')
