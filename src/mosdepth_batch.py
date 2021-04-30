@@ -8,6 +8,7 @@ def depth(b: hb.batch.Batch, cram: hb.resource.ResourceGroup, bed: hb.resource.R
     j = b.new_job(name=f'depth-{label}')  # define job and label it as "depth-<file_name>"
     j.image('gcr.io/daly-neale-sczmeta/mosdepth') # use publicly available Docker image that contains mosdepth
     j.cpu(4) # update CPU size
+    j.storage('10G') # update storage
     # the command written below produces 7 outputs and since we don't want all of them, we specify which outputs here - 'regions' and 'thresholds' bed files
     j.declare_resource_group(ofile={
         'regions.bed.gz': '{root}.regions.bed.gz',
@@ -55,17 +56,17 @@ ht.write('{j.ofile}')"  # write it out
 if __name__ == '__main__':
     backend = hb.ServiceBackend(billing_project='daly-neale-sczmeta', bucket='imary116')  # set up backend
 
-    b = hb.Batch(backend=backend, name='calculating coverage and merging')  # define batch
+    b = hb.Batch(backend=backend, name='PPDO-19811 - coverage and merging')  # define batch
 
     # read in the bed file that has the coverage regions for each chr
-    bed = b.read_input('gs://imary116/coverage_region.bed')
+    bed = b.read_input('gs://imary116/data/coverage_region.bed')
 
     # empty lists
     results_region = []  # for the regions depth function output
     results_threshold = [] # for the threshold depth function output
     labels = [] # for corresponding sample names
 
-    with hl.hadoop_open('gs://imary116/sampled_78.txt') as cram_file_paths:  # file with paths to 78 randomly selected cram files
+    with hl.hadoop_open('gs://imary116/data/sampled100_per_pdo/input_files/sampled100_PDO-19811.txt') as cram_file_paths:  # file with paths to randomly selected cram files
         for path in cram_file_paths:
             path = path.strip().strip('""') # preprocess path
             label = os.path.splitext(os.path.basename(path))[0]  # only get the file name - without path (removed by os.path.basename) and '.cram' ext (removed by os.path.splitext) ex output: JP-RIK-C-00070
@@ -89,10 +90,10 @@ if __name__ == '__main__':
 
     # merging and saving the outputs as hail tables
     mr = merge(b, results_region, labels, 'region')
-    b.write_output(mr.ofile, 'gs://imary116/data/coverage/78_random_samples_region.ht')
+    b.write_output(mr.ofile, 'gs://imary116/data/sampled100_per_pdo/output_files/coverage/region/PDO-19811_region.ht')
 
     mt = merge(b, results_threshold, labels, 'threshold')
-    b.write_output(mt.ofile, 'gs://imary116/data/coverage/78_random_samples_threshold.ht')
+    b.write_output(mt.ofile, 'gs://imary116/data/sampled100_per_pdo/output_files/coverage/threshold/PDO-19811_threshold.ht')
 
     b.run(open=True, wait=False)  # run batch
 

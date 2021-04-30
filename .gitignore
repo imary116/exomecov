@@ -1,10 +1,22 @@
 ####
-/data/sc_global_japan_rik_Huang_Yoshikawa_schizophrenia_exome-RP-1855-Exome-JP-RIK-C-0007*
+# from data
+/data/2021-03-31_gnomad_scz-exome-manifest.txt
+/data/access_SCZ_pdo_tally.xlsx
+/data/no_access_SCZ_pdo.csv
+/data/sampled100_per_pdo/
+
+# from output 
 /output/local_output 
-/data/coverage_region.bed
-/src/trial_depth.py
+
+# from notebook 
+/notebook/trial_nb_for_depth_analysis.ipynb
+/notebook/junk_code.Rmd
+
+# from src 
 /src/.idea
 /src/hail-*
+/src/.*
+
 
 ####
 *fasta*

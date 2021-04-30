@@ -1,0 +1,15 @@
+---
+title: "Plotting Results"
+author: "Mary T. Yohannes"
+date: "4/30/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+ds <- read.csv('~/Desktop/Broad/tj/exomecov/data/2021-03-31_gnomad_scz-exome-manifest.txt', sep = "\t", header=T)
+```
+
