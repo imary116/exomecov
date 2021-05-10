@@ -7,9 +7,22 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(plotly)
 ```
 
 ```{r}
-ds <- read.csv('~/Desktop/Broad/tj/exomecov/data/2021-03-31_gnomad_scz-exome-manifest.txt', sep = "\t", header=T)
+# import data to plot 
+ds <- read.csv('~/Desktop/Broad/tj/exomecov/data/interval_sum_by_sample.tsv', sep = "\t", header=T)
 ```
+
+```{r}
+# plot the sample proportion of each PDO group
+p <- ggplot(ds, aes(x=pdo, y=prop, fill=pdo)) +
+  geom_boxplot() +
+  geom_point(alpha = 0)
+  
+ggplotly(p) %>% 
+  layout(title="Sample Proportion of Each PDO Group", xaxis=list(title = "PDO group", tickangle = 45), yaxis = list(title = "Proportion")) 
+```
+
 
