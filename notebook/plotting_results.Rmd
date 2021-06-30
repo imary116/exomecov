@@ -1,5 +1,5 @@
 ---
-title: "Plotting Results"
+title: "Plotting Results "
 author: "Mary T. Yohannes"
 date: "4/30/2021"
 output: html_document
@@ -10,19 +10,80 @@ knitr::opts_chunk$set(echo = TRUE)
 library(plotly)
 ```
 
+# 1a) plot using all Schizophrenia pdos 
 ```{r}
-# import data to plot 
-ds <- read.csv('~/Desktop/Broad/tj/exomecov/data/interval_sum_by_sample.tsv', sep = "\t", header=T)
-```
+# import data from second run to plot 
+ds <- read.csv('~/Desktop/Broad/tj/exomecov/output/interval_sum_by_sample.tsv', sep = "\t", header=T)
 
-```{r}
 # plot the sample proportion of each PDO group
 p <- ggplot(ds, aes(x=pdo, y=prop, fill=pdo)) +
   geom_boxplot() +
   geom_point(alpha = 0)
   
 ggplotly(p) %>% 
-  layout(title="Sample Proportion of Each PDO Group", xaxis=list(title = "PDO group", tickangle = 45), yaxis = list(title = "Proportion")) 
+  layout(title="Sample Proportion of Each PDO Group", xaxis=list(title = "PDO group", tickangle = 45), yaxis = list(title = "Proportion"))
 ```
+
+# 1b) plot using capture - sample proportion of each capture group
+```{r}
+# plot the sample proportion of each capture group
+p_cap2 <- ggplot(ds, aes(x=capture, y=prop, fill=pdo)) +
+  geom_boxplot() +
+  geom_point(alpha = 0)
+  
+ggplotly(p_cap2) %>% 
+  layout(title="Sample Proportion of Each Capture Group w PDO Fill", xaxis=list(title = "Capture group", tickangle = 45), yaxis = list(title = "Proportion")) 
+```
+
+# 1c) plot using some pdos (prior to having access to all pdos)
+```{r}
+# import data to plot 
+ds_pre <- read.csv('~/Desktop/Broad/tj/exomecov/output/pre_interval_sum_by_sample.tsv', sep = "\t", header=T)
+
+# plot the sample proportion of each PDO group
+p_pre <- ggplot(ds_pre, aes(x=pdo, y=prop, fill=pdo)) +
+  geom_boxplot() +
+  geom_point(alpha = 0)
+  
+ggplotly(p_pre) %>% 
+  layout(title="Sample Proportion of Each PDO Group", xaxis=list(title = "PDO group", tickangle = 45), yaxis = list(title = "Proportion"))
+```
+
+# 2a) plot the average coverages of chrX and Y in a scatterplot 
+```{r}
+# import data 
+x <- read.csv('~/Desktop/Broad/tj/exomecov/output/x_ave_total_cov.tsv', sep = "\t", header=T)
+y <- read.csv('~/Desktop/Broad/tj/exomecov/output/y_ave_total_cov.tsv', sep = "\t", header=T)
+
+# merge the datasets 
+xy <- merge(x, y, by = "sample")
+
+# plot 
+p_xy <- ggplot(xy, aes(x=mean_cov.x, y=mean_cov.y)) +
+  geom_point() 
+
+ggplotly(p_xy) %>% 
+  layout(title="Average Coverages of chrX and chrY for Each Sample", xaxis=list(title = "chrX Mean Coverage", tickangle = 45), yaxis = list(title = "chrY Mean Coverage"))
+```
+
+# 2b) plot total coverage of chrX and Y (weighted by the sum of the total coverages of chrX, Y and autosomes)
+```{r}
+# import data 
+auto <- read.csv('~/Desktop/Broad/tj/exomecov/output/auto_ave_total_cov.tsv', sep = "\t", header=T)
+
+# merge onto the merged dataset from above  
+xy_auto <- merge(xy, auto, by = "sample")
+
+# edit column names for the auto values 
+colnames(xy_auto)[6:7] <- c("mean_cov.auto","total_cov.auto")
+
+# plot 
+p_xy_auto <- ggplot(xy_auto, aes(x=total_cov.x/(total_cov.x + total_cov.y + total_cov.auto), y=total_cov.y/(total_cov.x + total_cov.y + total_cov.auto))) +
+  geom_point() 
+
+ggplotly(p_xy_auto) %>% 
+  layout(title="Total Coverages of chrX and chrY for Each Sample (weighted)", xaxis=list(title = "chrX Weighted Total Coverage", tickangle = 45), yaxis = list(title = "chrY Weighted Total Coverage"))
+```
+
 
 

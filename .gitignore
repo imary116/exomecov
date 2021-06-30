@@ -1,22 +1,18 @@
 ####
 # from data
-/data/2021-03-31_gnomad_scz-exome-manifest.txt
-/data/access_SCZ_pdo_tally.xlsx
-/data/no_access_SCZ_pdo.csv
-/data/sampled100_per_pdo/
+/data/
 
 # from output 
-/output/local_output 
+/output/
 
-# from notebook 
-/notebook/trial_nb_for_depth_analysis.ipynb
-/notebook/junk_code.Rmd
-
+# from notebook
+/notebook/.Rhistory
+/notebook/.ipynb_checkpoints/
+ 
 # from src 
 /src/.idea
 /src/hail-*
 /src/.*
-
 
 ####
 *fasta*

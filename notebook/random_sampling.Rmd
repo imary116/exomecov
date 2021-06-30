@@ -1,5 +1,5 @@
 ---
-title: "Random sampling of cram files"
+title: "Random sampling of cram files (100 per Schizophrenia PDO)"
 author: "Mary T. Yohannes"
 date: "4/8/2021"
 output: html_document
@@ -31,33 +31,36 @@ SCZ_pdo <- distinct(SCZ_ds, pdo) # 41 unique PDOs
 ds_filtered_by_pdo <- ds %>% filter(pdo %in% SCZ_pdo$pdo) # 44250 samples 
 
 # sanity check 
-#table(ds_filtered_by_pdo$pdo %in% SCZ_pdo$pdo)
+table(ds_filtered_by_pdo$pdo %in% SCZ_pdo$pdo)
 ```
 
 # 1e) filter to file paths that end with .cram 
 ```{r}
 cram_filtered_by_pdo <- subset(ds_filtered_by_pdo,grepl("^.+(.cram)$",cram)) # 28066 samples with .cram path extension 
+distinct(cram_filtered_by_pdo, pdo) # 27 pdos 
 
 # number of files paths with extensions other than .cram - 16184 samples in total 
-#not_cram_filtered_by_pdo <- subset(ds_filtered_by_pdo,!grepl("^.+(.cram)$",cram)) # 16184 samples in total 
-### later work: change these extensions to .cram and see which ones I have access to and can run the analysis on  
+not_cram_filtered_by_pdo <- subset(ds_filtered_by_pdo,!grepl("^.+(.cram)$",cram)) # 16184 samples in total 
+distinct(not_cram_filtered_by_pdo, pdo) # 23 pdos -> 9 pdos are in common between "cram_filtered_by_pdo" and "not_cram_filtered_by_pdo"
 ```
 
 # 1f) Since I didn't have access to all of the files in the orignal table, prior to running the steps above, I filtered out all sample paths with .cram extension (33182) and separated them into ones I have access to and ones I don't have access to using a python script - took 13 hours and 53 minutes to run on my local computer. So instead of running the python script again on the paths obtained in 1e, I decided to filter the paths from 1e using the results from the python script (this is to see which samples, from SCZ unique pdo samples, I had access to and which ones I didn't)
 ```{r}
-# for all files in the original table with .cram extension 
+# import outputs obtained from running the python script 
 access_paths <- read.table('~/Desktop/Broad/tj/exomecov/data/access_paths.txt') # I have access to 26825 sample paths  
 no_access_paths <- read.table('~/Desktop/Broad/tj/exomecov/data/no_access_paths.txt') # 6357 sample paths with no access 
 
+# for all files in the original table with .cram extension 
 # for SCZ unique pdo samples - subset of the original dataset 
-access_filtered_by_pdo <- cram_filtered_by_pdo %>% filter(cram %in% access_paths$V1) # 21745 samples with access 
-no_access_filtered_by_pdo <- cram_filtered_by_pdo %>% filter(cram %in% no_access_paths$V1) # 6321 samples with no access 
+access_filtered_by_pdo <- cram_filtered_by_pdo %>% filter(cram %in% access_paths$V1) # 21745 samples with access across 18 pdos
+no_access_filtered_by_pdo <- cram_filtered_by_pdo %>% filter(cram %in% no_access_paths$V1) # 6321 samples with no access across 9 pdos 
 
 # sanity check - all samples with .cram extension obtained from the unique SCZ pdos were included in the cram_paths.txt file (the access python script was run on this file) 
-#nrow(access_filtered_by_pdo) + nrow(no_access_filtered_by_pdo) == nrow(cram_filtered_by_pdo)
+nrow(access_filtered_by_pdo) + nrow(no_access_filtered_by_pdo) == nrow(cram_filtered_by_pdo)
 
-#distinct(no_access_filtered_by_pdo, pdo) # pdos with no access 
-# PDO-7055 (buckets of this PDO do not exist), PDO-10439, PDO-11912, PDO-8917, PDO-14779, PDO-17976, PDO-10544, PDO-9490, PDO-9436		
+distinct(no_access_filtered_by_pdo, pdo) 
+# 9 pdos with no access 
+# PDO-7055 (Google buckets of this PDO do not exist), PDO-10439, PDO-11912, PDO-8917, PDO-14779, PDO-17976, PDO-10544, PDO-9490, PDO-9436
 ```
 
 # 1g) save the no_access cram paths so you can email it to Christina and ask for access 
@@ -65,27 +68,107 @@ no_access_filtered_by_pdo <- cram_filtered_by_pdo %>% filter(cram %in% no_access
 write.csv(no_access_filtered_by_pdo,"~/Desktop/Broad/tj/exomecov/data/no_access_SCZ_pdo.csv", row.names = FALSE)
 ```
 
-# 2a) randomly select 100 cram file paths you have access to for the depth and merge analyses 
+# 1h) Christina said I should have access to all files now except for the samples with PDO-7055 b/c that workspaces seems to have been created w/o any cram files. So I run the python script (script that checks if I have access or not) on the no_access_paths.txt that I got from running the script the first time - checked the access of 6321 cram files. Then I got two outputs, no_access_access_paths.txt and no_access_no_access_paths.txt. Then, I subsetted "no_access_filtered_by_pdo" to the ones I have access to and added that onto "access_filtered_by_pdo" to get a total of samples (26 pdos). Now, the only PDO I don't have access to is PDO-7055. 
+```{r}
+# import outputs obtained from running the python script on the no_access_paths.txt 
+access_paths2 <- read.table('~/Desktop/Broad/tj/exomecov/data/no_access_access_paths.txt') # I have access to new 6212 sample paths  
+no_access_paths2 <- read.table('~/Desktop/Broad/tj/exomecov/data/no_access_no_access_paths.txt') # I still don't have access to 145 sample paths 
+
+# subset the SCZ unique pdo samples to samples with new access 
+access_filtered_by_pdo2 <- cram_filtered_by_pdo %>% filter(cram %in% access_paths2$V1) # 6207 samples with access across 8 pdos
+
+# no access from the new run 
+no_access_filtered_by_pdo2 <- cram_filtered_by_pdo %>% filter(cram %in% no_access_paths2$V1) # still no access to 114 samples under PDO-7055
+# sanity check 
+summary(filter(cram_filtered_by_pdo, pdo == 'PDO-7055')$cram == no_access_filtered_by_pdo2$cram)  
+
+# have all the files I have access to in one dataframe 
+access_merged <- rbind(access_filtered_by_pdo,access_filtered_by_pdo2) # across all the pdos for SCZ, I have access to a total of 27952 samples 
+distinct(access_merged, pdo) # access to 26 pdos for SCZ samples 
+
+# final data: access_merged and no_access_filtered_by_pdo2
+# sanity check 
+dim(cram_filtered_by_pdo)[1] == dim(access_merged)[1] + dim(no_access_filtered_by_pdo2)[1] #TRUE
+
+# sanity check 
+access_merged$cram[1] == access_filtered_by_pdo$cram[1] #TRUE
+access_merged$cram[21746] == access_filtered_by_pdo2$cram[1] #TRUE
+```
+
+# 2a) randomly select 100 cram file paths you have access to for the mosdepth analysis 
 ```{r}
 # how many pdos are accessible? 
-#unique(access_filtered_by_pdo[c("pdo")]) # OR distinct(access_filtered_by_pdo, pdo) # 18 pdos 
+unique(access_merged[c("pdo")]) # OR distinct(access_merged, pdo) # 26 pdos 
 
-# extract 100 samples at random - creates one whole file that has everything 
+# extract 100 samples at random and have them as one file  
 set.seed(123) # for reproducibility
 samples_per_group <- 100 
 
 # for pdos with <100 samples, include everything 
-subsample <- access_filtered_by_pdo %>%
+subsample <- access_merged %>%
   group_by(pdo) %>%
-  slice(sample(n(), min(samples_per_group, n()))) 
+  slice(sample(n(), min(samples_per_group, n())))
 
-#group_keys(subsample) # print out the groups
-#count(subsample) # how many samples per group/pdo? 
+group_keys(subsample) # print out the groups/pdos
+count(subsample) #OR table(subsample$pdo) # how many samples were sampled per group/pdo? 
 
 # sanity check 
-#sum(count(subsample)$n) == nrow(subsample)
+sum(count(subsample)$n) == nrow(subsample) #TRUE
+```
 
-# split the whole file into individual data frames (per pdo) - 18 data frames in total 
+# 2b) subset table to columns needed for the mosdepth analysis and for annotation later 
+```{r}
+# table with cram paths and pdo column  
+grouped_subsample_cram <- subsample %>% select(pdo, cram) # extract only the cram file paths and pdo group membership 
+
+# add sample ID as a column for annotation later 
+grouped_subsample_cram$sample_ID <- NA 
+# extract the sample ID from the CRAM paths and add them onto their respective rows under sample_ID column 
+for (i in 1:nrow(grouped_subsample_cram)) {
+  n <- strsplit(grouped_subsample_cram$cram[i], .Platform$file.sep)[[1]][7]
+  grouped_subsample_cram$sample_ID[i] <- n
+}
+
+# for the PDO "EXTERNAL", the above code returns NA value due to the formatting of the path so there are no sample IDs assigned for those samples in the produced table. For now, we will remove it 
+grouped_subsample_cram <- grouped_subsample_cram %>% filter(pdo != "EXTERNAL")
+
+# sanity check - 25 pdos without EXTERNAL
+distinct(grouped_subsample_cram, pdo)
+```
+
+# 2c) write out the table in 2b - pdo, cram paths and sample_ID - tab delimited tsv file without quotes around the string entries 
+```{r}
+write.table(grouped_subsample_cram,"~/Desktop/Broad/tj/exomecov/data/sampled100_per_pdo/pdo25_crampath_sampleID.tsv",sep="\t",row.names=FALSE, quote=FALSE)
+```
+
+# 2d) add the "capture" column and produce a new tsv file for plotting later - this step can be merged with the steps in 2b above with a slight adjustment to the mosdepth python script 
+```{r}
+id_n_capture <- subsample %>% select(capture, cram) # extract only the cram file paths and capture columns - pdo column is automatically added 
+
+# add sample ID as a column for matching purposes later 
+id_n_capture$sample_ID <- NA 
+
+# extract the sample ID from the CRAM paths and add them onto their respective rows under sample_ID column 
+for (i in 1:nrow(id_n_capture)) {
+  n <- strsplit(id_n_capture$cram[i], .Platform$file.sep)[[1]][7]
+  id_n_capture$sample_ID[i] <- n
+}
+
+# remove pdo "EXTERNAL"
+id_n_capture <- id_n_capture %>% filter(pdo != "EXTERNAL")
+```
+
+# 2e) write out the file in 2d - pdo, capture, cram paths, and sample_ID - tab delimited tsv file without quotes around the string entries 
+```{r}
+write.table(id_n_capture,"~/Desktop/Broad/tj/exomecov/data/sampled100_per_pdo/sampleID_capture.tsv",sep="\t",row.names=FALSE, quote=FALSE)
+```
+
+
+
+
+# Junk code - for future reference  
+```{r}
+# split the whole file into individual data frames (per pdo) - 26 data frames in total 
 pdo_subsample <- group_split(subsample)
 
 # extract only the cram paths for each group/data frame/pdo 
@@ -94,39 +177,12 @@ for (n in seq(nrow(group_keys(subsample))))
   group = group_keys(subsample)$pdo
   assign(group[n], pdo_subsample[[n]] %>% select(cram))
 }
-```
 
-# 2b) save the paths of samples in each pdo group to individual txt files (one txt file per group - total 18 txt files) - the mosdepth script is run on these files 
-```{r}
+# save the paths of samples in each pdo group to individual txt files (one txt file per group - total 26 txt files) - the old mosdepth script was run on these files 
 for (i in group_keys(subsample)$pdo)
 {
   write.table(get(i),paste0("~/Desktop/Broad/tj/exomecov/data/sampled100_per_pdo/sampled100_", i, ".txt"), row.names=FALSE, col.names=FALSE)
 }
 ```
 
-# 2c) for annotation purposes for later 
-```{r}
-# table with cram paths and pdo column  
-grouped_subsample_cram <- subsample %>% select(cram) # extract only the cram file paths and pdo group membership 
 
-# add sample ID as a column for annotation later 
-grouped_subsample_cram$sample_ID <- NA 
-
-# extract the sample ID from the CRAM paths and add them onto their respective rows under sample_ID column 
-for (i in 1:nrow(grouped_subsample_cram)) {
-  n <- strsplit(grouped_subsample_cram$cram[i], .Platform$file.sep)[[1]][7]
-  grouped_subsample_cram$sample_ID[i] <- n
-}
-
-# for the PDO "EXTERNAL", the above code returns NA value due to the formatting of the path so there are no sample IDs assigned for those samples in the produced table. For now, we will remove it - work on that later 
-grouped_subsample_cram <- grouped_subsample_cram %>% filter(pdo != "EXTERNAL")
-#strsplit(strsplit(grouped_subsample_cram$cram[1], .Platform$file.sep)[[1]][6], '\\.')[[1]][2] # trial code: getting the sample IDs for pdo - "EXTERNAL"
-
-# sanity check - 17 pdos 
-#distinct(grouped_subsample_cram, pdo)
-```
-
-# 2d) write out the file in 2c - pdo, cram paths and sample_ID - tab delimited tsv file without quotes around the string entries 
-```{r}
-write.table(grouped_subsample_cram,"~/Desktop/Broad/tj/exomecov/data/sampled100_per_pdo/pdo17_crampath_sampleID.tsv",sep="\t",row.names=FALSE, quote=FALSE)
-```

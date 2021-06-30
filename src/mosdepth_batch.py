@@ -1,6 +1,7 @@
 import hailtop.batch as hb
 import os
 import hail as hl
+from collections import defaultdict
 
 
 # function to run mosdepth
@@ -16,6 +17,7 @@ def depth(b: hb.batch.Batch, cram: hb.resource.ResourceGroup, bed: hb.resource.R
     })
     j.command(f'''mosdepth -n -b {bed} -T 1,10,20 {j.ofile} {cram.cram}''') # run mosdepth on the .cram file and save it to a tmp file j.ofile
     return j
+
 
 
 # function to merge the results produced from the depth function and annotate them with sample names (makes use of hail query)
@@ -56,46 +58,63 @@ ht.write('{j.ofile}')"  # write it out
 if __name__ == '__main__':
     backend = hb.ServiceBackend(billing_project='daly-neale-sczmeta', bucket='imary116')  # set up backend
 
-    b = hb.Batch(backend=backend, name='PPDO-19811 - coverage and merging')  # define batch
-
-    # read in the bed file that has the coverage regions for each chr
-    bed = b.read_input('gs://imary116/data/coverage_region.bed')
-
     # empty lists
-    results_region = []  # for the regions depth function output
-    results_threshold = [] # for the threshold depth function output
-    labels = [] # for corresponding sample names
+    pdo_list = []
+    path_list = []
+    with hl.hadoop_open('gs://imary116/second_run/data/pdo25_crampath_sampleID.tsv') as cram_file_paths:
+        cram_file_paths.readline()  # skip the header
+        for row in cram_file_paths:
+            row = row.strip()  # remove space at end of each row
+            pdo, path, sample_id = row.split('\t')  # for each row, split the three column values into three variables
+            pdo_list.append(pdo)
+            path_list.append(path)
 
-    with hl.hadoop_open('gs://imary116/data/sampled100_per_pdo/input_files/sampled100_PDO-19811.txt') as cram_file_paths:  # file with paths to randomly selected cram files
-        for path in cram_file_paths:
-            path = path.strip().strip('""') # preprocess path
-            label = os.path.splitext(os.path.basename(path))[0]  # only get the file name - without path (removed by os.path.basename) and '.cram' ext (removed by os.path.splitext) ex output: JP-RIK-C-00070
-            labels.append(label) # add sample label to the list
+    # missing key will always be a list and if a key already exists, then it will just be appended to
+    file_dict = defaultdict(list)
+    for pdo, path in zip(pdo_list, path_list):
+        file_dict[pdo].append(path) # dictionary looks something like: {'pdo_1' : [sample1_path, sample2_path], 'pdo_2' : [sample3_path, sample4_path, sample5_path] ... }
 
-            # read in cram and corresponding crai files
-            cram = b.read_input_group(
-                cram=path,
-                crai=f'{path}.crai')
+    if (len(file_dict) == len(set(pdo_list))): # for sanity check - 25 pdos in total
 
-            # run depth function
-            j = depth(b, cram, bed, label)
+        for key in file_dict.keys(): # for each pdo
+            b = hb.Batch(backend=backend, name=f'{key} - coverage and merging')  # define batch
 
-            # append depth function outputs to their corresponding lists
-            results_region.append(j.ofile['regions.bed.gz'])
-            results_threshold.append(j.ofile['thresholds.bed.gz'])
+            # read in the bed file that has the coverage regions for each chr
+            bed = b.read_input('gs://imary116/second_run/data/grch38_gencode-regions_2017-11-07_gencode-cds-regions-p8-grch38.bed')
 
-            # to write the output files of the depth function for each sample in a google cloud bucket (prior to merging the outputs)
-            #b.write_output(j.ofile, f'gs://imary116/data/mosdepth-coverage/{label}')
+            # more empty lists
+            results_region = []  # for the regions depth function output
+            results_threshold = []  # for the threshold depth function output
+            labels = []  # for corresponding sample names
 
+            for path in file_dict[key]: # get the paths for all randomly selected samples that are under that pdo and do the following
+                #path = path.strip().strip('""')  # preprocess path
+                label = os.path.splitext(os.path.basename(path))[0]  # only get the file name - without path (removed by os.path.basename) and '.cram' ext (removed by os.path.splitext) ex output: JP-RIK-C-00070
+                labels.append(label)  # add sample label to the list
 
-    # merging and saving the outputs as hail tables
-    mr = merge(b, results_region, labels, 'region')
-    b.write_output(mr.ofile, 'gs://imary116/data/sampled100_per_pdo/output_files/coverage/region/PDO-19811_region.ht')
+                # read in cram and corresponding crai files
+                cram = b.read_input_group(
+                    cram=path,
+                    crai=f'{path}.crai')
 
-    mt = merge(b, results_threshold, labels, 'threshold')
-    b.write_output(mt.ofile, 'gs://imary116/data/sampled100_per_pdo/output_files/coverage/threshold/PDO-19811_threshold.ht')
+                # run depth function
+                j = depth(b, cram, bed, label)
 
-    b.run(open=True, wait=False)  # run batch
+                # append depth function outputs to their corresponding lists
+                results_region.append(j.ofile['regions.bed.gz'])
+                results_threshold.append(j.ofile['thresholds.bed.gz'])
+
+                # to write the output files of the depth function for each sample in a google cloud bucket (prior to merging the outputs)
+                #b.write_output(j.ofile, f'gs://imary116/data/mosdepth-coverage/{label}')
+
+                # merging and saving the outputs as hail tables
+            mr = merge(b, results_region, labels, 'region')
+            b.write_output(mr.ofile, f'gs://imary116/second_run/output/region/{key}_region.ht')
+
+            mt = merge(b, results_threshold, labels, 'threshold')
+            b.write_output(mt.ofile, f'gs://imary116/second_run/output/threshold/{key}_threshold.ht')
+
+            b.run(open=True, wait=False)  # run batch
 
     backend.close()
 
