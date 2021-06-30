@@ -1,4 +1,5 @@
-# exomecov
+# exomecov 
+## calculating and plotting genome-wide sequencing coverage of Schizophrenia data 
 
 #### /src - scripts 
 #### /data - raw input data 
